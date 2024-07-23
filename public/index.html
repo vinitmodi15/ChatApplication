@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+  <style>
+    /* Add your styles here */
+  </style>
+</head>
+<body>
+  <ul id="messages"></ul>
+  <form id="form" action="">
+    <input id="message" autocomplete="off" placeholder="Type your message here..." /><button>Send</button>
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+  <script>
+    const socket = io();
+
+    let username = prompt('Enter your username:');
+    if (!username) {
+      username = 'Anonymous';
+    }
+
+    socket.emit('set username', username);
+
+    const form = document.getElementById('form');
+    const input = document.getElementById('message');
+    const messages = document.getElementById('messages');
+
+    // Load previous messages
+    socket.on('load messages', (msgs) => {
+      msgs.forEach((msg) => {
+        const item = document.createElement('li');
+        item.textContent = `${msg.sender}: ${msg.content} (${moment(msg.timestamp).format('HH:mm:ss')})`;
+        messages.appendChild(item);
+      });
+    });
+
+    // Handle incoming messages
+    socket.on('chat message', (msg) => {
+      const item = document.createElement('li');
+      item.textContent = `${msg.sender}: ${msg.content} (${moment(msg.timestamp).format('HH:mm:ss')})`;
+      messages.appendChild(item);
+    });
+
+    // Send message
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value) {
+        const message = {
+          content: input.value
+        };
+        socket.emit('chat message', message);
+        input.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
